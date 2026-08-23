@@ -3,13 +3,16 @@
 # No source build = fast deploys. Pin for stability: diegosouzapw/omniroute:3.8.49
 FROM diegosouzapw/omniroute:latest
 
-# Base image already sets NODE_ENV, PORT, HOSTNAME, DATA_DIR and its own
-# HEALTHCHECK (/api/monitoring/health). We only tune what differs:
+# Base image already sets NODE_ENV, HOSTNAME, DATA_DIR and its own HEALTHCHECK.
+# We only tune what differs:
 ENV \
     # Heap ceiling — base default is 1024MB. Lower = lighter on Railway plans.
     OMNIROUTE_MEMORY_MB=384 \
     # Railway terminates HTTPS at the edge; cookies must be Secure.
-    AUTH_COOKIE_SECURE=true
+    AUTH_COOKIE_SECURE=true \
+    # The app listens on port 8080 (as seen in startup logs). Setting this
+    # ensures Railway maps your domain to the correct internal port.
+    PORT=8080
 
 # NOTE: upstream ends its image as non-root "node", which cannot chmod or fix
 # root-owned volumes. We therefore run as root and let the entrypoint drop
@@ -30,6 +33,6 @@ exec node dev/run-standalone.mjs
 EOF
 RUN chmod +x /usr/local/bin/railway-entry.sh
 
-USER root
-EXPOSE 20128
 ENTRYPOINT ["/usr/local/bin/railway-entry.sh"]
+
+EXPOSE 8080
