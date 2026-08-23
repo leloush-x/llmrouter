@@ -1,38 +1,24 @@
-# syntax=docker/dockerfile:1
-# OmniRoute on Railway — thin layer over the official prebuilt multi-arch image.
-# No source build = fast deploys. Pin for stability: diegosouzapw/omniroute:3.8.49
-FROM diegosouzapw/omniroute:latest
+FROM alpine:latest
 
-# Base image already sets NODE_ENV, HOSTNAME, DATA_DIR and its own HEALTHCHECK.
-# We only tune what differs:
-ENV \
-    # Heap ceiling — base default is 1024MB. Lower = lighter on Railway plans.
+ENV NODE_ENV=production \
+    PORT=20128 \
+    HOSTNAME=0.0.0.0 \
+    DATA_DIR=/app/data \
     OMNIROUTE_MEMORY_MB=384 \
-    # Railway terminates HTTPS at the edge; cookies must be Secure.
-    AUTH_COOKIE_SECURE=true \
-    # The app listens on port 8080 (as seen in startup logs). Setting this
-    # ensures Railway maps your domain to the correct internal port.
-    PORT=8080
+    AUTH_COOKIE_SECURE=true
 
-# NOTE: upstream ends its image as non-root "node", which cannot chmod or fix
-# root-owned volumes. We therefore run as root and let the entrypoint drop
-# privileges via setpriv AFTER repairing /app/data ownership.
-USER root
+WORKDIR /app
 
-COPY <<'EOF' /usr/local/bin/railway-entry.sh
-#!/bin/sh
-set -e
-if [ "$(id -u)" = "0" ]; then
-  mkdir -p /app/data
-  chown -R node:node /app/data 2>/dev/null || true
-  if command -v setpriv >/dev/null 2>&1; then
-    exec setpriv --reuid=node --regid=node --clear-groups node dev/run-standalone.mjs
-  fi
-fi
-exec node dev/run-standalone.mjs
-EOF
-RUN chmod +x /usr/local/bin/railway-entry.sh
+# Install Node.js, npm, and dependencies for native compilation and Bun
+RUN apk update && \
+    apk add --no-cache nodejs npm bash curl unzip make gcc g++ python3 linux-headers
 
-ENTRYPOINT ["/usr/local/bin/railway-entry.sh"]
+# Install OmniRoute globally
+RUN npm install -g omniroute
 
-EXPOSE 8080
+# Setup persistence directory
+RUN mkdir -p /app/data
+
+EXPOSE 20128
+
+CMD ["omniroute"]
