@@ -11,9 +11,11 @@ ENV \
     # Railway terminates HTTPS at the edge; cookies must be Secure.
     AUTH_COOKIE_SECURE=true
 
-# Railway volumes mount root-owned, but this image runs as UID 1000 ("node")
-# and cannot write to /app/data -> crash on boot. Start as root, fix ownership,
-# then drop back to node before launching the server (same CMD as upstream).
+# NOTE: upstream ends its image as non-root "node", which cannot chmod or fix
+# root-owned volumes. We therefore run as root and let the entrypoint drop
+# privileges via setpriv AFTER repairing /app/data ownership.
+USER root
+
 COPY <<'EOF' /usr/local/bin/railway-entry.sh
 #!/bin/sh
 set -e
@@ -28,5 +30,6 @@ exec node dev/run-standalone.mjs
 EOF
 RUN chmod +x /usr/local/bin/railway-entry.sh
 
+USER root
 EXPOSE 20128
 ENTRYPOINT ["/usr/local/bin/railway-entry.sh"]
