@@ -1,6 +1,6 @@
 FROM cgr.dev/chainguard/wolfi-base
 
-RUN apk add --no-cache nodejs npm git curl openssh python 
+RUN apk add --no-cache nodejs npm git curl openssh python3 
 
 WORKDIR /app
 RUN git clone --depth 1 https://github.com/diegosouzapw/OmniRoute.git .
