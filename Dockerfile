@@ -16,4 +16,4 @@ ENV PORT=8000
 EXPOSE 8000
 
 # Start the OmniRoute AI gateway with explicit host and port flags to guarantee binding
-CMD ["omniroute", "--port", "8000", "--host", "0.0.0.0"]
+CMD ["omniroute", "--port", "8000"]
