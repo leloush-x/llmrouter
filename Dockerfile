@@ -1,24 +1,14 @@
-FROM alpine:latest
+FROM ghcr.io/quorinex/freebuff2api:latest
 
-ENV NODE_ENV=production \
-    PORT=20128 \
-    HOSTNAME=0.0.0.0 \
-    DATA_DIR=/app/data \
-    OMNIROUTE_MEMORY_MB=384 \
-    AUTH_COOKIE_SECURE=true
+# ===== Freebuff2API Configuration =====
+ENV LISTEN_ADDR=:8080
+ENV UPSTREAM_BASE_URL=https://www.codebuff.com
+ENV AUTH_TOKENS=0f7b570a-91b9-4dc2-97c5-efc1db0d136d
+ENV ROTATION_INTERVAL=6h
+ENV REQUEST_TIMEOUT=15m
+ENV API_KEYS=
+ENV HTTP_PROXY=
 
-WORKDIR /app
+EXPOSE 8080
 
-# Install Node.js, npm, and dependencies for native compilation and Bun
-RUN apk update && \
-    apk add --no-cache nodejs npm bash curl unzip make gcc g++ python3 linux-headers
-
-# Install OmniRoute globally
-RUN npm install -g omniroute
-
-# Setup persistence directory
-RUN mkdir -p /app/data
-
-EXPOSE 20128
-
-CMD ["omniroute"]
+ENTRYPOINT ["Freebuff2API"]
